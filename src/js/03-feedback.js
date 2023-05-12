@@ -1,38 +1,32 @@
 import throttle from "lodash.throttle";
 
 const formEl = document.querySelector(".feedback-form");
-const emailEl = document.querySelector(".feedback-form input");
-const messageEl = document.querySelector(".feedback-form textarea");
 
-let userData = {
-	email: "",
-	message: "",
-};
-
-if (JSON.parse(localStorage.getItem("feedback-form-state"))) {
-	const savedUserData = JSON.parse(localStorage.getItem("feedback-form-state"));
-	emailEl.value = savedUserData.email;
-	messageEl.value = savedUserData.message;
-}
-
-const captureUserData = (event) => {
-	userData[event.target.name] = event.target.value;
-	localStorage.setItem("feedback-form-state", JSON.stringify(userData));
-};
-
-const throttleCaptureUserData = throttle(captureUserData, 500);
-
-const sendForm = (event) => {
-	if (emailEl.value === "" || messageEl.value === "") {
-		alert("Proszę wypełnić wszystkie pola formularza.");
+const updateFormData = () => {
+	const formData = JSON.parse(localStorage.getItem("feedback-form-state"));
+	if (formData) {
+		formEl.email.value = formData.email || "";
+		formEl.message.value = formData.message || "";
 	} else {
-		event.preventDefault();
-		console.log(userData);
-		event.currentTarget.reset();
-		localStorage.removeItem("feedback-form-state");
+		formEl.reset();
 	}
 };
 
-emailEl.addEventListener("input", throttleCaptureUserData);
-messageEl.addEventListener("input", throttleCaptureUserData);
-formEl.addEventListener("submit", sendForm);
+const saveFormData = throttle((event) => {
+	const formData = {
+		email: formEl.email.value,
+		message: formEl.message.value,
+	};
+	localStorage.setItem("feedback-form-state", JSON.stringify(formData));
+}, 500);
+
+const clearFormData = (event) => {
+	event.preventDefault();
+	localStorage.removeItem("feedback-form-state");
+	updateFormData();
+};
+
+updateFormData();
+
+formEl.addEventListener("input", saveFormData);
+formEl.addEventListener("submit", clearFormData);
